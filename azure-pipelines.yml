@@ -2,7 +2,6 @@ stages:
 
 - stage: ProvisionEnvironment
   variables:
-    - group: 'Terraform'
     - name: tfstatename
       value: 'azapril.emotion-checker.master.tfstate'
     - name: resource_name

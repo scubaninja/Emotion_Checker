@@ -2,10 +2,9 @@ stages:
 
 - stage: ProvisionEnvironment
   variables:
-    - group: 'Terraform Service Principal'
-    - group: 'Terraform State'
-    - name: tfstate_key
-      value: 'scubaninja.emotion-checker.master.tfstate'
+    - group: 'Terraform'
+    - name: tfstatename
+      value: 'AZapril.emotion-checker.master.tfstate'
     - name: resource_name
       value: 'emotionchecker'
 
@@ -22,22 +21,18 @@ stages:
         targetFiles: '**/*.tfvars'
   
     - script: |
-        terraform init \
-          -backend-config="resource_group_name=$(tfstate_resource_group)" \
-          -backend-config="storage_account_name=$(tfstate_storage_account)" \
-          -backend-config="container_name=$(tfstate_container)" \
-          -backend-config="key=$(tfstate_key)" \
-          -backend-config="access_key=$(tfstate_access_key)"
-
+         terraform init \
+          -backend-config="resource_group_name=$(resourcegroup)" \
+          -backend-config="storage_account_name=$(storageaccount)" \
+          -backend-config="container_name=$(containername)" \
+          -backend-config="key=$(tfstatename)" \
+          -backend-config="access_key=$(accesskey)"
       workingDirectory: ./env
       displayName: 'Terraform init'
-
     - script: |
        terraform apply -auto-approve
-
       workingDirectory: ./env
       displayName: 'Terraform apply'
-
 - stage: Build
   jobs:
   - job: BuildFunction
@@ -86,10 +81,9 @@ stages:
   jobs:
   - job: Deploy
     variables:
-      - group: 'Terraform Service Principal'
-      - group: 'Terraform State'
-      - name: tfstate_key
-        value: 'scubaninja.emotion-checker.master.tfstate'
+      - group: 'Terraform'
+      - name: tfstatename
+        value: 'AZapril.emotion-checker.master.tfstate'
       - name: resource_name
         value: 'emotionchecker'
     pool:      
@@ -97,22 +91,18 @@ stages:
     steps:
     - script: |
         terraform init \
-          -backend-config="resource_group_name=$(tfstate_resource_group)" \
-          -backend-config="storage_account_name=$(tfstate_storage_account)" \
-          -backend-config="container_name=$(tfstate_container)" \
-          -backend-config="key=$(tfstate_key)" \
-          -backend-config="access_key=$(tfstate_access_key)"
-
+          -backend-config="resource_group_name=$(resourcegroup)" \
+          -backend-config="storage_account_name=$(storageaccount)" \
+          -backend-config="container_name=$(containername)" \
+          -backend-config="key=$(tfstatename)" \
+          -backend-config="access_key=$(accesskey)"
       workingDirectory: ./env
       displayName: 'Terraform init'
-
     - script: |
-        functionname=$(terraform output -json function_name | jq '.value' | tr -d '"')   
+        functionname=$(terraform output function_name)   
         echo "##vso[task.setvariable variable=function_name;]$functionname"
-
       workingDirectory: ./env
       displayName: 'Get function name'
-
     - task: DownloadPipelineArtifact@1
       inputs:
         buildType: current
